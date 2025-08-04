@@ -187,3 +187,5 @@ app.get('/api/games/categories/list', async (req, res) => {
 app.listen(port, () => {
   console.log(`Game Service running on port ${port}`);
 });
+
+// Triggering the first CI/CD pipeline run
