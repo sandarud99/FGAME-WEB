@@ -1,0 +1,170 @@
+# postgres-simple.yaml - Use this if the main postgres.yaml still fails
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  namespace: microservices
+data:
+  POSTGRES_DB: gamestore
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: password123
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: gamestore
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          value: password123
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        readinessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - exec pg_isready -U postgres -d gamestore -h 127.0.0.1 -p 5432
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6
+        livenessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - exec pg_isready -U postgres -d gamestore -h 127.0.0.1 -p 5432
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 6
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: postgres-storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: microservices
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+---
+# Job to initialize database after postgres is running
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: postgres-init-job
+  namespace: microservices
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: postgres-init
+        image: postgres:15-alpine
+        env:
+        - name: PGHOST
+          value: postgres-service
+        - name: PGPORT
+          value: "5432"
+        - name: PGDATABASE
+          value: gamestore
+        - name: PGUSER
+          value: postgres
+        - name: PGPASSWORD
+          value: password123
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Waiting for PostgreSQL to be ready..."
+          until pg_isready -h $PGHOST -p $PGPORT -U $PGUSER; do
+            echo "Waiting for database connection..."
+            sleep 2
+          done
+          
+          echo "PostgreSQL is ready. Initializing database..."
+          
+          psql << 'EOF'
+          -- Games table
+          CREATE TABLE IF NOT EXISTS games (
+              id SERIAL PRIMARY KEY,
+              name VARCHAR(255) NOT NULL,
+              category VARCHAR(100) NOT NULL,
+              released_date DATE,
+              price DECIMAL(10, 2) NOT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+
+          -- Orders table
+          CREATE TABLE IF NOT EXISTS orders (
+              id SERIAL PRIMARY KEY,
+              customer_name VARCHAR(255) NOT NULL,
+              customer_email VARCHAR(255) NOT NULL,
+              total_price DECIMAL(10, 2) NOT NULL,
+              status VARCHAR(50) DEFAULT 'pending',
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+
+          -- Order items table
+          CREATE TABLE IF NOT EXISTS order_items (
+              id SERIAL PRIMARY KEY,
+              order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+              game_id INTEGER,
+              game_name VARCHAR(255) NOT NULL,
+              quantity INTEGER NOT NULL DEFAULT 1,
+              price DECIMAL(10, 2) NOT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+
+          -- Insert sample games
+          INSERT INTO games (name, category, released_date, price) VALUES
+              ('Call of Duty: Modern Warfare', 'Action', '2023-10-27', 59.99),
+              ('FIFA 24', 'Sports', '2023-09-29', 69.99),
+              ('The Legend of Zelda', 'Adventure', '2023-05-12', 59.99),
+              ('Cyberpunk 2077', 'RPG', '2020-12-10', 49.99),
+              ('Minecraft', 'Sandbox', '2011-11-18', 26.95)
+          ON CONFLICT DO NOTHING;
+          EOF
+          
+          echo "Database initialization completed."

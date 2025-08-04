@@ -1,0 +1,61 @@
+name: Deploy Order Service to EKS
+
+on:
+  push:
+    branches:
+      - main
+    # This workflow only runs for changes in the 'order-service/' path
+    paths:
+      - 'order-service/**'
+
+jobs:
+  build-and-deploy-order-service:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build, tag, and push image to ECR
+      # Note the working-directory change
+      working-directory: ./order-service
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY_ORDER }} # Using the order service secret
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Install and configure kubectl
+      run: |
+        curl -o kubectl https://s3.us-west-2.amazonaws.com/amazon-eks/1.23.7/2022-06-29/bin/linux/amd64/kubectl
+        chmod +x ./kubectl
+        sudo mv ./kubectl /usr/local/bin/
+        aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+
+    - name: Deploy to EKS
+      run: |
+        # IMPORTANT: Target the order-service deployment
+        kubectl set image deployment/order-service-649fc6f68 order-service=${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_REPOSITORY_ORDER }}:${{ github.sha }} -n microservices
+        
+    - name: Verify deployment
+      run: kubectl rollout status deployment/order-service-649fc6f68 -n microservices
+
+    - name: Run Integration Tests
+      # Note the working-directory change
+      working-directory: ./order-service
+      run: |
+        npm install -g newman
+        # Assumes your collection is named 'order-service.postman_collection.json'
+        newman run order-service.postman_collection.json --env-var "baseUrl=${{ secrets.SERVICE_URL_ORDER }}" --bail
