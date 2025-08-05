@@ -188,4 +188,4 @@ app.listen(port, () => {
   console.log(`Game Service running on port ${port}`);
 });
 
-// added content for postman game & order
+// Fixed kubectl install command in order-service-ci.yml file
