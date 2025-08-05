@@ -39,11 +39,12 @@ jobs:
 
     - name: Install and configure kubectl
       run: |
-        curl -o kubectl https://s3.us-east-1.amazonaws.com/amazon-eks/1.23.7/2022-06-29/bin/linux/amd64/kubectl
+        # Use the official Kubernetes release URL which is more stable
+        curl -Lo kubectl "https://dl.k8s.io/release/v1.23.7/bin/linux/amd64/kubectl"
         chmod +x ./kubectl
-        sudo mv ./kubectl /usr/local/bin/
+        sudo mv ./kubectl /usr/local/bin/kubectl
         aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
-
+        
     - name: Deploy to EKS
       run: |
         # IMPORTANT: Target the order-service deployment
