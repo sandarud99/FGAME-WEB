@@ -24,10 +24,16 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseURL}}/api/games",
+					"raw": "http://a427fcaf207454cbe9cdce80351b8a97-338534810.us-east-1.elb.amazonaws.com:3001/api/games",
+					"protocol": "http",
 					"host": [
-						"{{baseURL}}"
+						"a427fcaf207454cbe9cdce80351b8a97-338534810",
+						"us-east-1",
+						"elb",
+						"amazonaws",
+						"com"
 					],
+					"port": "3001",
 					"path": [
 						"api",
 						"games"
