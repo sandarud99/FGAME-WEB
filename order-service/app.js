@@ -287,3 +287,5 @@ app.get('/api/orders/stats/summary', async (req, res) => {
 app.listen(port, () => {
   console.log(`Order Service running on port ${port}`);
 });
+
+// Triggering the order-service pipeline run
