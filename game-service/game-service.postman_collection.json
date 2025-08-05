@@ -1,0 +1,40 @@
+{
+	"info": {
+		"_postman_id": "a23c2a28-8b17-480f-9bca-6f3c9fe4f881",
+		"name": "api/games",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "28368418"
+	},
+	"item": [
+		{
+			"name": "/api/games",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseURL}}/api/games",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"api",
+						"games"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

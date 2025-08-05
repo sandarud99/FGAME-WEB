@@ -188,6 +188,4 @@ app.listen(port, () => {
   console.log(`Game Service running on port ${port}`);
 });
 
-// Triggering the first CI/CD pipeline run
-// Final trigger for the correct CI workflow
-// kubectl
+// added content for postman game & order

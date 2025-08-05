@@ -1,0 +1,50 @@
+{
+	"info": {
+		"_postman_id": "a0e13e91-f435-400c-9685-e076e3fe7662",
+		"name": "api/orders",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "28368418"
+	},
+	"item": [
+		{
+			"name": "/api/orders/",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"customer_name\": \"John Doe\",\r\n    \"customer_email\": \"john@example.com\",\r\n    \"items\": [\r\n        {\r\n            \"game_id\": 1,\r\n            \"name\": \"The Witcher 3: Wild Hunt\",\r\n            \"quantity\": 2,\r\n            \"unit_price\": 39.99\r\n        },\r\n        {\r\n            \"game_id\": 2,\r\n            \"name\": \"Cyberpunk 2077\",\r\n            \"quantity\": 1,\r\n            \"unit_price\": 59.99\r\n        }\r\n    ]\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://a83afce0bfe0140ba8b1d765d6c5c831-1829847030.us-east-1.elb.amazonaws.com:3002/api/orders",
+					"protocol": "http",
+					"host": [
+						"a83afce0bfe0140ba8b1d765d6c5c831-1829847030",
+						"us-east-1",
+						"elb",
+						"amazonaws",
+						"com"
+					],
+					"port": "3002",
+					"path": [
+						"api",
+						"orders"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "http://a427fcaf207454cbe9cdce80351b8a97-338534810.us-east-1.elb.amazonaws.com:3001",
+			"type": "default"
+		}
+	]
+}
