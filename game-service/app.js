@@ -190,3 +190,4 @@ app.listen(port, () => {
 
 // Triggering the first CI/CD pipeline run
 // Final trigger for the correct CI workflow
+// kubectl
